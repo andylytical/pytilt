@@ -11,11 +11,6 @@ if [[ $py_major == '3' ]] ; then
     set -x
     apt install -y bluetooth libbluetooth-dev
     pip install pybluez
-    # scipy install failed in python3 container with error: 
-    # (ModuleNotFoundError: No module named 'numpy')
-    # perhaps need to install numpy first
-#    pip install numpy #sibowler/brewpi-brewometer
-#    pip install scipy #sibowler/brewpi-brewometer
     set +x
 else
     echo Unsupported Python version '$py_major'

@@ -1,7 +1,7 @@
 import blescan
 import bluetooth._bluetooth as bluez
 import datetime
-import pprint
+#import pprint
 
 class LEScanner( object ):
     # uuid's of various colour tilt hydrometers
@@ -34,6 +34,8 @@ class LEScanner( object ):
     def scan( self ):
         #TODO - make this a "with" style context manager
 
+        datalist = []
+
         # Setup
         sock = bluez.hci_open_dev( self.devid )
         blescan.hci_le_set_scan_parameters( sock )
@@ -47,14 +49,17 @@ class LEScanner( object ):
                 color = self.uuidmap[ beacon.uuid ]
             except (KeyError) as e:
                 continue
-            print( 'Found Tilt color: {}'.format( color ) )
+            #print( 'Found Tilt color: {}'.format( color ) )
             data = { 
                 'datetime': datetime.datetime.now(),
                 'SG':       float( beacon.minor ) / 1000,
                 'Temp':     float( beacon.major ),
                 'Color':    color,
             }
-            pprint.pprint( data )
+            #pprint.pprint( data )
+            datalist.append( data )
 
         # Teardown
         blescan.hci_disable_le_scan( sock )
+
+        return datalist
