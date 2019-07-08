@@ -12,8 +12,9 @@ import collections
 import csv
 import os
 import pathlib
-import pprint
 import tiltscanner
+
+import pprint
 
 #module level paramter settings
 _params = {}
@@ -34,19 +35,27 @@ def _get_tiltcolor():
     raw_color = _get_param( 'PYTILT_COLOR' )
     return raw_color.upper()
 
-def _get_csvfile():
-    return _get_param( 'PYTILT_CSVFILE', pathlib.Path )
-
 def _get_period():
     return _get_param( 'PYTILT_SAMPLE_PERIOD', int )
 
 def _get_rate():
     return _get_param( 'PYTILT_SAMPLE_RATE', int )
 
+#def _get_beername():
+#    return _get_param( 'PYTILT_BEERNAME', pathlib.Path )
+
+def _get_csvfile():
+    rawpath = _get_param( 'PYTILT_CSVOUTFILE', pathlib.Path )
+    tgtpath = rawpath
+    if not rawpath.is_absolute():
+        tgtpath = pathlib.Path( '/data' ) / rawpath
+    return tgtpath
+
 
 def _parse_cmdline():
     arg_defaults = {
-        'PYTILT_COLOR': 'red',
+        'PYTILT_COLOR': '',
+        'PYTILT_CSVOUTFILE': 'pytilt_output.csv',
         'PYTILT_SAMPLE_PERIOD': 900,
         'PYTILT_SAMPLE_RATE': 5,
     }
@@ -62,8 +71,9 @@ def _parse_cmdline():
         )
     parser.add_argument(
         '-f', '--file',
-        dest = 'PYTILT_CSVFILE',
-        help = ( 'CSV output file ' )
+        dest = 'PYTILT_CSVOUTFILE',
+        help = ( 'CSV output file '
+                 f'[default={arg_defaults["PYTILT_CSVOUTFILE"]}] ' )
         )
     parser.add_argument(
         '-p', '--period', type=int,
@@ -80,9 +90,7 @@ def _parse_cmdline():
         )
     namespace = parser.parse_args()
     cmdline_args = { k:v for k,v in vars(namespace).items() if v }
-    #pprint.pprint( cmdline_args )
     combined = collections.ChainMap( cmdline_args, os.environ, arg_defaults )
-    #pprint.pprint( combined )
     _params[ 'args' ] = combined
 
 
@@ -94,6 +102,10 @@ def csv_get_headers():
 
 
 def csv_write_sample( data ):
+    ''' Data is a Hash of Hashes, where
+        Key = color
+        Value = hash of data (suitable to write out as csv)
+    '''
     outfile = _get_csvfile()
     headers = []
     needs_header = True
@@ -101,12 +113,14 @@ def csv_write_sample( data ):
         headers = csv_get_headers()
         needs_header = False
     else:
-        headers = data.keys()
+        first_color = next( iter( data ) )
+        headers = data[ first_color ].keys()
     with outfile.open( mode='a', newline='' ) as fh:
         csv_handle = csv.DictWriter( fh, headers )
         if needs_header:
             csv_handle.writeheader()
-        csv_handle.writerow( data )
+        for color in data:
+            csv_handle.writerow( data[ color ] )
 
 
 def main():
@@ -115,14 +129,15 @@ def main():
                                 )
     color = _get_tiltcolor()
     outfile = _get_csvfile()
-    #pprint.pprint( [ ts, color, outfile ] )
-    #raise SystemExit( 'stopping' )
-    #while( true ):
-    for i in range(15):
+    pprint.pprint( [ ts, f'Color={color}', outfile ] )
+    while( True ):
         raw_sample = ts.get_data_point()
-        color_sample = raw_sample[ color ]
-        pprint.pprint( color_sample )
-        csv_write_sample( color_sample )
+        if raw_sample:
+            filtered_sample = raw_sample
+            if color:
+                filtered_sample = { color: raw_sample[ color ] }
+            pprint.pprint( filtered_sample )
+            csv_write_sample( filtered_sample )
 
 if __name__ == '__main__':
     _parse_cmdline()
