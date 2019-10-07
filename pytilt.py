@@ -16,8 +16,10 @@ import tiltscanner
 
 import pprint
 
+
 #module level paramter settings
 _params = {}
+
 
 ### Getter methods for program parameters.
 def _get_param( pname, ptype=str ):
@@ -35,14 +37,14 @@ def _get_tiltcolor():
     raw_color = _get_param( 'PYTILT_COLOR' )
     return raw_color.upper()
 
+
 def _get_period():
     return _get_param( 'PYTILT_SAMPLE_PERIOD', int )
+
 
 def _get_rate():
     return _get_param( 'PYTILT_SAMPLE_RATE', int )
 
-#def _get_beername():
-#    return _get_param( 'PYTILT_BEERNAME', pathlib.Path )
 
 def _get_csvfile():
     rawpath = _get_param( 'PYTILT_CSVOUTFILE', pathlib.Path )
