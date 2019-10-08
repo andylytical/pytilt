@@ -4,7 +4,7 @@ set -x
 
 USER="andylytical"
 IMAGE="tiltscanner"
-TAG=$( date "+%Y%m%d" )
+TAG=$( date "+%Y%m%d" )-$( git rev-parse --short HEAD )
 
 # BUILD IMAGE
 docker build . -t ${IMAGE}:${TAG}
