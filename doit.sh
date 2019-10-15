@@ -1,16 +1,24 @@
 #!/bin/bash
+set -x
 
-export TIMEZONE=America/Chicago
-#export PYTILT_CSVOUTFILE=tiltdata.csv
-#export PYTILT_SAMPLE_PERIOD=2
-#export PYTILT_SAMPLE_RATE=1
-#export PYTILT_COLOR='RED'
+IMAGE=andylytical/tiltscanner:20191007-38b6498
+CSV_BASEDIR=tiltdata
+BEERNAME='20191013 Pumpkin Joe Brown'
 
-docker run -d \
--e TIMEZONE \
--e PYTILT_CSVOUTFILE \
--e PYTILT_SAMPLE_PERIOD \
--e PYTILT_SAMPLE_RATE \
--v $(pwd):/data \
---net=host \
-pytiltdev
+declare -A ENVIRON
+ENVIRON[PYTHONUNBUFFERED]=TRUE
+ENVIRON[PYTILT_COLOR]=
+ENVIRON[PYTILT_CSVOUTFILE]=/${CSV_BASEDIR:-.}/${BEERNAME:-tiltdata}.csv
+ENVIRON[PYTILT_SAMPLE_PERIOD]=30
+ENVIRON[PYTILT_SAMPLE_RATE]=2
+ENVIRON[PYTILT_COLOR]=
+
+for k in "${!ENVIRON[@]}"; do
+    envs+=('-e')
+    envs+=("$k=${ENVIRON[$k]}")
+done
+
+docker run -d --network="host" \
+--volume=${HOME}/${CSV_BASEDIR:-.}:/${CSV_BASEDIR} \
+"${envs[@]}" \
+$IMAGE
